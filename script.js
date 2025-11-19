@@ -347,29 +347,31 @@ function onKey(e) {
 
 function undo() {
     if (gameOver) return;
+
     const prev = history.pop();
     if (!prev) return;
 
     board = deepCopyBoard(prev.board);
     score = prev.score;
+
     if (typeof prev.bestScore === 'number' && !isNaN(prev.bestScore)) {
         bestScore = prev.bestScore;
-        try { localStorage.setItem('bestScore', String(bestScore)); } catch (e) { /* ignore */ }
     } else {
-   
-        try {
-            const storedBest = Number(localStorage.getItem('bestScore') || '0');
-            bestScore = Math.max(storedBest || 0, score || 0);
-            try { localStorage.setItem('bestScore', String(bestScore)); } catch (e) {}
-        } catch (e) {
-            
-        }
+ 
+        const histBest = history.reduce((m, h) => {
+            return (typeof h.bestScore === 'number' && !isNaN(h.bestScore)) ? Math.max(m, h.bestScore) : m;
+        }, 0);
+
+        bestScore = Math.max(histBest, score || 0);
     }
+
+    try { localStorage.setItem('bestScore', String(bestScore)); } catch (e) { /* ignore */ }
 
     render();
     if (safeEl(bestEl)) bestEl.textContent = String(bestScore);
     saveGameStateToStorage();
 }
+
 
 
 
