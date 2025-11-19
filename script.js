@@ -296,8 +296,9 @@ function moveDownInternal() {
 
 function performMove(direction) {
     if (gameOver) return;
-    try { history.push({ board: deepCopyBoard(board), score }); } catch(e){}
+    try { history.push({ board: deepCopyBoard(board), score, bestScore }); } catch(e){}
     if (history.length > 100) history.shift();
+
 
     let res;
     if (direction === 'left') res = moveLeftInternal();
@@ -348,25 +349,28 @@ function undo() {
     if (gameOver) return;
     const prev = history.pop();
     if (!prev) return;
+
     board = deepCopyBoard(prev.board);
     score = prev.score;
-
-    try {
-        const storedBest = Number(localStorage.getItem('bestScore') || '0');
-        const candidates = [bestScore, storedBest, score].filter(s => typeof s === 'number' && !isNaN(s));
-        const recomputedMax = candidates.length ? Math.max(...candidates) : score;
-
-        if (recomputedMax !== bestScore) {
-            bestScore = recomputedMax;
-            try { localStorage.setItem('bestScore', String(bestScore)); } catch (e) { /* ignore */ }
+    if (typeof prev.bestScore === 'number' && !isNaN(prev.bestScore)) {
+        bestScore = prev.bestScore;
+        try { localStorage.setItem('bestScore', String(bestScore)); } catch (e) { /* ignore */ }
+    } else {
+   
+        try {
+            const storedBest = Number(localStorage.getItem('bestScore') || '0');
+            bestScore = Math.max(storedBest || 0, score || 0);
+            try { localStorage.setItem('bestScore', String(bestScore)); } catch (e) {}
+        } catch (e) {
+            
         }
-    } catch (e) {
     }
 
     render();
     if (safeEl(bestEl)) bestEl.textContent = String(bestScore);
     saveGameStateToStorage();
 }
+
 
 
 
