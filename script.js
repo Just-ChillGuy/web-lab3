@@ -348,29 +348,26 @@ function undo() {
     if (gameOver) return;
     const prev = history.pop();
     if (!prev) return;
-
     board = deepCopyBoard(prev.board);
     score = prev.score;
 
     try {
+        const storedBest = Number(localStorage.getItem('bestScore') || '0');
+        const candidates = [bestScore, storedBest, score].filter(s => typeof s === 'number' && !isNaN(s));
+        const recomputedMax = candidates.length ? Math.max(...candidates) : score;
 
-        const allScores = [...(history.map(h => h.score)), score].filter(s => typeof s === 'number');
-        const recomputedBest = allScores.length ? Math.max(...allScores) : score;
-
-        if (bestScore !== recomputedBest) {
-            bestScore = recomputedBest;
-            try {
-                localStorage.setItem('bestScore', String(bestScore));
-            } catch (e) { /* ignore */ }
+        if (recomputedMax !== bestScore) {
+            bestScore = recomputedMax;
+            try { localStorage.setItem('bestScore', String(bestScore)); } catch (e) { /* ignore */ }
         }
     } catch (e) {
-        bestScore = score;
     }
 
     render();
     if (safeEl(bestEl)) bestEl.textContent = String(bestScore);
     saveGameStateToStorage();
 }
+
 
 
 
